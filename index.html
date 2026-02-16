@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GROVE GEAR DEPOSITO</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; }
+        .glass-card { background: white; border: 1px solid #e2e8f0; transition: all 0.3s ease; }
+        .capital-danger { border: 2px solid #6366f1; box-shadow: 0 0 15px rgba(99, 102, 241, 0.3); animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.8; } }
+        #app-shell { display: none; }
+    </style>
+</head>
+<body class="p-0 md:p-6">
+
+    <div id="login-screen" class="fixed inset-0 bg-slate-900 flex items-center justify-center z-[100]">
+        <div class="bg-white p-10 rounded-[3rem] shadow-2xl w-full max-w-sm text-center">
+            <img src="GROVE_GEAR_LOGO.png" alt="Logo" class="w-32 h-32 mx-auto mb-6 object-contain rounded-3xl shadow-lg">
+            <h2 class="text-2xl font-black uppercase tracking-tighter text-slate-800">Grove Gear</h2>
+            <form id="login-form" class="mt-8 space-y-4">
+                <input type="password" id="pass-input" class="w-full bg-slate-50 border-2 border-slate-100 p-4 rounded-2xl outline-none focus:border-indigo-500 text-center font-bold text-xl" placeholder="PIN" required>
+                <button type="submit" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black hover:bg-indigo-700 transition">UNLOCK</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="app-shell" class="max-w-6xl mx-auto p-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 items-center bg-white p-6 rounded-[2.5rem] shadow-sm">
+            <div class="flex items-center gap-4">
+                <img src="GROVE_GEAR_LOGO.png" alt="Logo" class="w-16 h-16 object-contain">
+                <div>
+                    <h1 class="text-xl font-black uppercase text-slate-800">Grove Gear</h1>
+                    <div id="status-mode" class="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-[8px] font-black rounded uppercase tracking-widest inline-block">System Active</div>
+                </div>
+            </div>
+            <div class="text-right">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Konsolidasi Kas</p>
+                <h2 class="text-3xl font-black text-slate-800" id="total-semua">Rp 0</h2>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div id="card-modal" class="glass-card p-6 rounded-[2rem] border-t-4 border-indigo-600">
+                <span class="text-[9px] font-black uppercase text-indigo-600 tracking-widest">Buku 0: Modal Utama</span>
+                <h3 class="text-2xl font-black mt-2" id="buku-modal">Rp 0</h3>
+                <p class="text-[8px] text-slate-400 font-bold mt-1 uppercase" id="modal-note">Status: Aman</p>
+            </div>
+            <div class="glass-card p-6 rounded-[2rem] border-t-4 border-blue-500">
+                <span class="text-[9px] font-black uppercase text-blue-500 tracking-widest">Buku 1: Ops (80%)</span>
+                <h3 class="text-2xl font-black mt-2" id="buku-op">Rp 0</h3>
+            </div>
+            <div class="glass-card p-6 rounded-[2rem] border-t-4 border-amber-500">
+                <span class="text-[9px] font-black uppercase text-amber-500 tracking-widest">Buku 2: Pajak (5%)</span>
+                <h3 class="text-2xl font-black mt-2" id="buku-tax">Rp 0</h3>
+            </div>
+            <div class="glass-card p-6 rounded-[2rem] border-t-4 border-emerald-500">
+                <span class="text-[9px] font-black uppercase text-emerald-500 tracking-widest">Buku 3: Profit (15%)</span>
+                <h3 class="text-2xl font-black mt-2" id="buku-profit">Rp 0</h3>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+            <div class="bg-indigo-900 p-8 rounded-[3rem] text-white shadow-xl">
+                <h2 class="text-xs font-black uppercase text-indigo-300 mb-6 tracking-widest">Uang Masuk (Modal Recovery)</h2>
+                <div class="space-y-4">
+                    <input type="text" id="in-desc" class="w-full bg-white/10 p-4 rounded-2xl outline-none border border-white/5" placeholder="Keterangan Penjualan">
+                    <input type="number" id="in-amt" class="w-full bg-white/10 p-4 rounded-2xl outline-none text-2xl font-black" placeholder="Nominal Rp">
+                    <button onclick="processIn()" class="w-full bg-indigo-500 text-white py-4 rounded-2xl font-black hover:bg-indigo-400 transition uppercase">Posting Masuk</button>
+                </div>
+            </div>
+
+            <div class="bg-white p-8 rounded-[3rem] shadow-sm border border-slate-200">
+                <h2 class="text-xs font-black uppercase text-red-600 mb-6 tracking-widest">Tarik Dana</h2>
+                <div class="space-y-4">
+                    <select id="out-target" class="w-full bg-slate-50 p-4 rounded-2xl outline-none font-bold border border-slate-100">
+                        <option value="modal">Buku Modal</option>
+                        <option value="op">Buku Operasional</option>
+                        <option value="tax">Buku Pajak</option>
+                        <option value="profit">Buku Profit</option>
+                    </select>
+                    <input type="text" id="out-desc" class="w-full bg-slate-50 p-4 rounded-2xl outline-none" placeholder="Keperluan">
+                    <input type="number" id="out-amt" class="w-full bg-slate-50 p-4 rounded-2xl outline-none text-2xl font-black" placeholder="Nominal Rp">
+                    <button onclick="processOut()" class="w-full bg-slate-800 text-white py-4 rounded-2xl font-black hover:bg-black transition uppercase">Konfirmasi Tarik</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-[2.5rem] border border-slate-200 overflow-hidden shadow-sm">
+            <div class="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                <span class="font-black text-[10px] uppercase text-slate-400 tracking-tighter">Transaction Log</span>
+                <button onclick="resetData()" class="text-[9px] font-black text-red-400 uppercase hover:text-red-600">Clear Database</button>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50 text-[9px] font-black uppercase text-slate-400">
+                        <tr>
+                            <th class="p-6">Waktu</th>
+                            <th class="p-6">Keterangan</th>
+                            <th class="p-6">Buku</th>
+                            <th class="p-6 text-right">Mutasi</th>
+                            <th class="p-6 text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="log-table" class="text-xs divide-y divide-slate-50 font-bold"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = { databaseURL: "https://grove-gear-cashflow-default-rtdb.asia-southeast1.firebasedatabase.app/" };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        document.getElementById('login-form').onsubmit = (e) => {
+            e.preventDefault();
+            if(document.getElementById('pass-input').value === "admin123") {
+                sessionStorage.setItem('isLoggedIn', 'true');
+                showApp();
+            } else { alert("PIN Salah!"); }
+        };
+
+        function showApp() {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('app-shell').style.display = 'block';
+            sync();
+        }
+
+        const formatRp = (n) => "Rp " + new Intl.NumberFormat('id-ID').format(Math.floor(n));
+
+        function sync() {
+            db.ref('ledger_pro').on('value', (snap) => {
+                const data = snap.val();
+                const trans = data ? Object.entries(data).map(([id, val]) => ({ id, ...val })) : [];
+                updateUI(trans);
+            });
+        }
+
+        function updateUI(transactions) {
+            let saldo = { modal: 0, op: 0, tax: 0, profit: 0 };
+            const table = document.getElementById('log-table');
+            table.innerHTML = '';
+
+            // Hitung Ulang dari Awal (Urutan Waktu)
+            transactions.sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+            transactions.forEach(t => {
+                if(t.type === 'IN') {
+                    if(saldo.modal < 0) {
+                        let debt = Math.abs(saldo.modal);
+                        if(t.amt <= debt) {
+                            saldo.modal += t.amt;
+                        } else {
+                            saldo.modal = 0;
+                            let excess = t.amt - debt;
+                            // Update Logika: Pajak 5%, Profit 15%
+                            saldo.op += excess * 0.8;
+                            saldo.tax += excess * 0.05;
+                            saldo.profit += excess * 0.15;
+                        }
+                    } else {
+                        // Update Logika: Pajak 5%, Profit 15%
+                        saldo.op += t.amt * 0.8;
+                        saldo.tax += t.amt * 0.05;
+                        saldo.profit += t.amt * 0.15;
+                    }
+                } else {
+                    saldo[t.book] -= t.amt;
+                }
+
+                const rowHTML = `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="p-6 text-slate-400 text-[10px]">${t.time}</td>
+                    <td class="p-6 uppercase text-slate-700 font-black">${t.desc}</td>
+                    <td class="p-6"><span class="px-2 py-1 bg-slate-100 rounded text-[9px] uppercase font-black text-slate-500">${t.book}</span></td>
+                    <td class="p-6 text-right font-black ${t.type === 'IN' ? 'text-emerald-500' : 'text-red-500'}">
+                        ${t.type === 'IN' ? '+' : '-'}${formatRp(t.amt)}
+                    </td>
+                    <td class="p-6 text-center">
+                        <button onclick="deleteItem('${t.id}')" class="text-slate-300 hover:text-red-500 transition">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
+                </tr>`;
+                table.insertAdjacentHTML('afterbegin', rowHTML);
+            });
+
+            document.getElementById('buku-modal').innerText = formatRp(saldo.modal);
+            document.getElementById('buku-op').innerText = formatRp(saldo.op);
+            document.getElementById('buku-tax').innerText = formatRp(saldo.tax);
+            document.getElementById('buku-profit').innerText = formatRp(saldo.profit);
+            document.getElementById('total-semua').innerText = formatRp(saldo.modal + saldo.op + saldo.tax + saldo.profit);
+
+            const modalBtn = document.getElementById('card-modal');
+            const modalNote = document.getElementById('modal-note');
+            if(saldo.modal < 0) {
+                modalBtn.classList.add('capital-danger');
+                modalNote.innerText = "Status: Pemulihan Modal";
+                modalNote.className = "text-[8px] text-indigo-600 font-black mt-1 uppercase";
+            } else {
+                modalBtn.classList.remove('capital-danger');
+                modalNote.innerText = "Status: Aman";
+                modalNote.className = "text-[8px] text-slate-400 font-bold mt-1 uppercase";
+            }
+        }
+
+        function processIn() {
+            const desc = document.getElementById('in-desc').value;
+            const amt = parseFloat(document.getElementById('in-amt').value);
+            if(!amt || !desc) return alert("Isi data!");
+            db.ref('ledger_pro').push({
+                time: new Date().toLocaleString('id-ID', {dateStyle:'short', timeStyle:'short'}),
+                timestamp: new Date().toISOString(),
+                desc, amt, type: 'IN', book: 'SYSTEM'
+            });
+            document.getElementById('in-amt').value = '';
+            document.getElementById('in-desc').value = '';
+        }
+
+        function processOut() {
+            const desc = document.getElementById('out-desc').value;
+            const amt = parseFloat(document.getElementById('out-amt').value);
+            const book = document.getElementById('out-target').value;
+            if(!amt || !desc) return alert("Isi data!");
+            db.ref('ledger_pro').push({
+                time: new Date().toLocaleString('id-ID', {dateStyle:'short', timeStyle:'short'}),
+                timestamp: new Date().toISOString(),
+                desc, amt, type: 'OUT', book: book
+            });
+            document.getElementById('out-amt').value = '';
+            document.getElementById('out-desc').value = '';
+        }
+
+        function deleteItem(id) {
+            if(confirm("Hapus transaksi ini? Saldo akan dikalkulasi ulang otomatis.")) {
+                db.ref('ledger_pro').child(id).remove();
+            }
+        }
+
+        function resetData() { if(confirm("Hapus seluruh database?")) db.ref('ledger_pro').remove(); }
+        if(sessionStorage.getItem('isLoggedIn')) showApp();
+    </script>
+</body>
+</html>
