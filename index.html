@@ -52,7 +52,7 @@
                 <p class="text-[8px] text-slate-400 font-bold mt-1 uppercase" id="modal-note">Status: Aman</p>
             </div>
             <div class="glass-card p-6 rounded-[2rem] border-t-4 border-blue-500">
-                <span class="text-[9px] font-black uppercase text-blue-500 tracking-widest">Buku 1: Ops (80%)</span>
+                <span class="text-[9px] font-black uppercase text-blue-500 tracking-widest">Buku 1: Ops (50%)</span>
                 <h3 class="text-2xl font-black mt-2" id="buku-op">Rp 0</h3>
             </div>
             <div class="glass-card p-6 rounded-[2rem] border-t-4 border-amber-500">
@@ -60,7 +60,7 @@
                 <h3 class="text-2xl font-black mt-2" id="buku-tax">Rp 0</h3>
             </div>
             <div class="glass-card p-6 rounded-[2rem] border-t-4 border-emerald-500">
-                <span class="text-[9px] font-black uppercase text-emerald-500 tracking-widest">Buku 3: Profit (15%)</span>
+                <span class="text-[9px] font-black uppercase text-emerald-500 tracking-widest">Buku 3: Profit (45%)</span>
                 <h3 class="text-2xl font-black mt-2" id="buku-profit">Rp 0</h3>
             </div>
         </div>
@@ -147,7 +147,6 @@
             const table = document.getElementById('log-table');
             table.innerHTML = '';
 
-            // Hitung Ulang dari Awal (Urutan Waktu)
             transactions.sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
 
             transactions.forEach(t => {
@@ -159,16 +158,16 @@
                         } else {
                             saldo.modal = 0;
                             let excess = t.amt - debt;
-                            // Update Logika: Pajak 5%, Profit 15%
-                            saldo.op += excess * 0.8;
+                            // Update Logika: Ops 50%, Pajak 5%, Profit 45%
+                            saldo.op += excess * 0.5;
                             saldo.tax += excess * 0.05;
-                            saldo.profit += excess * 0.15;
+                            saldo.profit += excess * 0.45;
                         }
                     } else {
-                        // Update Logika: Pajak 5%, Profit 15%
-                        saldo.op += t.amt * 0.8;
+                        // Update Logika: Ops 50%, Pajak 5%, Profit 45%
+                        saldo.op += t.amt * 0.5;
                         saldo.tax += t.amt * 0.05;
-                        saldo.profit += t.amt * 0.15;
+                        saldo.profit += t.amt * 0.45;
                     }
                 } else {
                     saldo[t.book] -= t.amt;
